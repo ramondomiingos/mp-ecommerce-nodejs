@@ -34,6 +34,11 @@ app.get('/pending', function (req, res) {
 app.get('/failure', function (req, res) {
   res.render('failure', req.query);
 });
+app.post('/hook', function (req, res) {
+  console.log(req.body)
+  res.render('success', req);
+});
+
 app.post('/detail', function (req, res) {
 
     let preference = {
@@ -80,7 +85,7 @@ app.post('/detail', function (req, res) {
             ],
             installments: 6
         },
-      
+        notification_url: req.protocol + "://" + req.get('host') +"/hook",
         external_reference: "ramongemio@gmail.com"
       };
       console.log(preference)
