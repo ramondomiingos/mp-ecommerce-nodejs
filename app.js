@@ -1,9 +1,13 @@
 var express = require('express');
 var exphbs  = require('express-handlebars');
+const bodyParser = require("body-parser");
 var port = process.env.PORT || 3000
 const mercadopago = require('mercadopago');
 var app = express();
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 mercadopago.configure({
+    integrator_id: 'dev_24c65fb163bf11ea96500242ac130004',
     access_token: 'APP_USR-334491433003961-030821-12d7475807d694b645722c1946d5ce5a-725736327'
   });
 
@@ -21,20 +25,34 @@ app.get('/', function (req, res) {
 app.get('/detail', function (req, res) {
     res.render('detail', req.query);
 });
-
+app.get('/success', function (req, res) {
+  res.render('success', req.query);
+});
+app.get('/pending', function (req, res) {
+  res.render('pending', req.query);
+});
+app.get('/failure', function (req, res) {
+  res.render('failure', req.query);
+});
 app.post('/detail', function (req, res) {
-   
-    
-    console.log(req.body)
-  
+
     let preference = {
         items: [
           {
-            title: 'Meu produto',
-            unit_price: 100,
+            title: req.query.title,
+            unit_price: Number(req.query.price),
             quantity: 1,
+            "description": "Celular de Tienda e-commerce",
+            "picture_url":req.protocol + "://" + req.get('host')+req.query.img.substr(1),
+            "external_reference":"ramongemio@gmail.com"
           }
         ],
+        back_urls: {
+          "success": req.protocol + "://" + req.get('host') +"/success",
+          "failure": req.protocol + "://" + req.get('host') +"/failure",
+          "pending": req.protocol + "://" + req.get('host') +"/pending",
+        },
+        auto_return: 'approved',
         payer: {
             name: "Lalo",
             surname: "Landa",
@@ -62,13 +80,16 @@ app.post('/detail', function (req, res) {
             ],
             installments: 6
         },
+      
         external_reference: "ramongemio@gmail.com"
       };
+      console.log(preference)
       mercadopago.preferences.create(preference)
       .then(function(preference){
         // Este valor substituirá o string "$init_point$" no seu HTML
+        console.log(preference)
         global.init_point = preference.body.init_point;
-        res.render('detail', req.query);
+        res.redirect(global.init_point);
        // console.log(preference.body);
       }).catch(function(error){
         console.log(error);
